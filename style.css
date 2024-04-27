@@ -15,3 +15,10 @@
 .full-screen-modal .ant-modal-body {
     flex: 1;
 }
+
+minidenticon-svg svg {
+    border-radius: 50%;
+    background-color: rgb(255, 255, 255);
+    height: 48px;
+    width: 48px;
+  };

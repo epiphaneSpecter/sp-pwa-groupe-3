@@ -22,9 +22,38 @@
   </head>
   <body>
     <div id="app">
+      <a-modal
+        v-model:open="userNotExist"
+        title="Study"
+        width="100%"
+        wrap-class-name="full-screen-modal"
+        :footer="null"
+        @ok="hideChannel"
+      >
+        <a-form :layout="'vertical'" :model="userForm" @finish="onSaveUser">
+          <minidenticon-svg :username="userForm.pseudo"></minidenticon-svg>
+          <a-form-item
+            label="Entrer votre Pseudo"
+            name="pseudo"
+            :rules="[{ required: true, message: 'Please input your pseudo!' }]"
+          >
+            <a-input v-model:value="userForm.pseudo"> </a-input>
+          </a-form-item>
+
+          <a-form-item>
+            <a-button
+              :disabled="userFormDisabled"
+              type="primary"
+              html-type="submit"
+            >
+              Continue
+            </a-button>
+          </a-form-item>
+        </a-form>
+      </a-modal>
       <a-list item-layout="horizontal">
-        <a-list-item v-for="item in channels" :key="item" @click="showChannel">
-          <a-list-item-meta>
+        <a-list-item v-for="item in channels" :key="item.id" @click="showChannel">
+          <a-list-item-meta :description="item.description">
             <template #title>
               <a href="#">{{ item.label }}</a>
             </template>
@@ -76,9 +105,10 @@
           </template>
           <template #content>
             <p>
-              Nous fournissons une série de principes de conception, de modèles pratiques et
-              des ressources de conception de haute qualité (Sketch et Axure), pour aider les gens
-              créer leurs prototypes de produits de manière magnifique et efficace.
+              Nous fournissons une série de principes de conception, de modèles
+              pratiques et des ressources de conception de haute qualité (Sketch
+              et Axure), pour aider les gens créer leurs prototypes de produits
+              de manière magnifique et efficace.
             </p>
           </template>
           <template #datetime>
@@ -107,28 +137,43 @@
     <script src="https://unpkg.com/dexie/dist/dexie.js"></script>
 
     <script type="module">
-      const { createApp, ref } = Vue;
+      const { createApp, ref, reactive, computed } = Vue;
+      import { minidenticonSvg } from "https://cdn.jsdelivr.net/npm/minidenticons@4.2.1/minidenticons.min.js";
       import {
         AccountBookFilled,
         LikeFilled,
       } from "https://cdn.jsdelivr.net/npm/@ant-design/icons-vue@7.0.1/+esm";
 
-
-      const {liveQuery} = Dexie
+      const { liveQuery } = Dexie;
 
       dayjs.extend(dayjs_plugin_relativeTime);
 
       var db = new Dexie("StudyDatabase");
 
       db.version(1).stores({
-        students: "++id, pseudo, age",
         channels: "++id, label",
-        comments: "++id, studentId",
-        actions: "++id, studentId, commentId, type",
+        messages: "++id, senderId, channelId, like, dislike",
       });
+
+      db.channels
+        .bulkPut([
+          { id: 1, label: "General", description: "Le Canal étudiant pour échanger sur la vie universitaire, les cours et les événements." },
+          { id: 2, label: "PWA", description: "Canal PWA : discussions sur le développement et les meilleures pratiques des Progressive Web Apps." },
+          { id: 3, label: "MVC", description: "Canal MVC : Échanges sur l'architecture Model-View-Controller, conseils, et meilleures pratiques." },
+        ])
+        .then(() => {
+          return db.channels.toArray();
+        })
+        .then((channels) => {
+          console.log(channels);
+        })
+        .catch((err) => {
+          console.log(err);
+        });
 
       const app = createApp({
         setup() {
+          const userId = ref(localStorage.getItem("userId"));
           
           const show = ref(false);
           const channels = ref([]);
@@ -139,7 +184,7 @@
 
           const channelsObservable = liveQuery(() => db.channels.toArray());
           const channelsSubscription = channelsObservable.subscribe({
-            next: (result) => channels.value = result,
+            next: (result) => (channels.value = result),
             error: (error) => console.error(error),
           });
 
@@ -161,15 +206,40 @@
             action.value = "disliked";
           };
 
+          const userForm = reactive({
+            pseudo: "",
+          });
+
+          const onSaveUser = ({pseudo}) => {
+            console.log(pseudo);
+            const uuid = crypto.randomUUID();
+            localStorage.setItem('userId', uuid)
+            localStorage.setItem('pseudo', pseudo)
+            userId.value = uuid
+          };
+
+          const userFormDisabled = computed(() => {
+            return !userForm.pseudo;
+          });
+
+          const userNotExist = computed(() => {
+            return userId.value === null || userId.value === "";
+          });
+           
           return {
             show,
             channels,
             likes,
             dislikes,
+            userId,
+            userNotExist,
+            userForm,
+            userFormDisabled,
             showChannel,
             hideChannel,
             like,
             dislike,
+            onSaveUser,
             dayjs,
           };
         },
