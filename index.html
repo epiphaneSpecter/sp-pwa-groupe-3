@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="author"
+      content="Groupe 3 (AVLAH Folly Epiphane | Martial GADJEU)"
+    />
+    <meta
+      name="description"
+      content="Study est une PWA conçue pour faciliter la communication et le partage d'informations entre les étudiants en formation à distance."
+    />
+    <title>Study</title>
+
+    <!-- Import Ant Design Vue Reset CSS -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/ant-design-vue@4.2.1/dist/reset.min.css"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div id="app">
+      <a-list item-layout="horizontal">
+        <a-list-item v-for="item in channels" :key="item" @click="showChannel">
+          <a-list-item-meta>
+            <template #title>
+              <a href="#">{{ item.label }}</a>
+            </template>
+            <template #avatar>
+              <a-avatar src="https://joeschmoe.io/api/v1/random" />
+            </template>
+          </a-list-item-meta>
+        </a-list-item>
+      </a-list>
+      <a-modal
+        v-model:open="show"
+        title="Channel"
+        width="100%"
+        wrap-class-name="full-screen-modal"
+        :footer="null"
+        @ok="hideChannel"
+      >
+        <a-comment>
+          <template #actions>
+            <span key="comment-basic-like">
+              <a-tooltip title="Like">
+                <template v-if="action === 'liked'">
+                  <LikeFilled @click="like" />
+                </template>
+                <template v-else>
+                  <LikeOutlined @click="like" />
+                </template>
+              </a-tooltip>
+              <span style="padding-left: 8px; cursor: auto"> {{ likes }} </span>
+            </span>
+            <span key="comment-basic-dislike">
+              <a-tooltip title="Dislike">
+                <template v-if="action === 'disliked'">
+                  <DislikeFilled @click="dislike" />
+                </template>
+                <template v-else>
+                  <DislikeOutlined @click="dislike" />
+                </template>
+              </a-tooltip>
+              <span style="padding-left: 8px; cursor: auto">
+                {{ dislikes }}
+              </span>
+            </span>
+            <span key="comment-basic-reply-to">Reply to</span>
+          </template>
+          <template #author><a>Han Solo</a></template>
+          <template #avatar>
+            <a-avatar src="https://joeschmoe.io/api/v1/random" alt="Han Solo" />
+          </template>
+          <template #content>
+            <p>
+              Nous fournissons une série de principes de conception, de modèles pratiques et
+              des ressources de conception de haute qualité (Sketch et Axure), pour aider les gens
+              créer leurs prototypes de produits de manière magnifique et efficace.
+            </p>
+          </template>
+          <template #datetime>
+            <a-tooltip :title="dayjs().format('YYYY-MM-DD HH:mm:ss')">
+              <span>{{ dayjs().fromNow() }}</span>
+            </a-tooltip>
+          </template>
+        </a-comment>
+      </a-modal>
+    </div>
+
+    <!-- Import Vue -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <!-- Import dayjs -->
+    <script src="https://unpkg.com/dayjs/dayjs.min.js"></script>
+    <script src="https://unpkg.com/dayjs/plugin/relativeTime.js"></script>
+    <script src="https://unpkg.com/dayjs/plugin/customParseFormat.js"></script>
+    <script src="https://unpkg.com/dayjs/plugin/weekday.js"></script>
+    <script src="https://unpkg.com/dayjs/plugin/localeData.js"></script>
+    <script src="https://unpkg.com/dayjs/plugin/weekOfYear.js"></script>
+    <script src="https://unpkg.com/dayjs/plugin/weekYear.js"></script>
+    <script src="https://unpkg.com/dayjs/plugin/advancedFormat.js"></script>
+    <script src="https://unpkg.com/dayjs/plugin/quarterOfYear.js"></script>
+    <!-- Import Ant Design Vue JS -->
+    <script src="https://cdn.jsdelivr.net/npm/ant-design-vue@4.2.1/dist/antd.min.js"></script>
+    <script src="https://unpkg.com/dexie/dist/dexie.js"></script>
+
+    <script type="module">
+      const { createApp, ref } = Vue;
+      import {
+        AccountBookFilled,
+        LikeFilled,
+      } from "https://cdn.jsdelivr.net/npm/@ant-design/icons-vue@7.0.1/+esm";
+
+
+      const {liveQuery} = Dexie
+
+      dayjs.extend(dayjs_plugin_relativeTime);
+
+      var db = new Dexie("StudyDatabase");
+
+      db.version(1).stores({
+        students: "++id, pseudo, age",
+        channels: "++id, label",
+        comments: "++id, studentId",
+        actions: "++id, studentId, commentId, type",
+      });
+
+      const app = createApp({
+        setup() {
+          
+          const show = ref(false);
+          const channels = ref([]);
+
+          const likes = ref(0);
+          const dislikes = ref(0);
+          const action = ref();
+
+          const channelsObservable = liveQuery(() => db.channels.toArray());
+          const channelsSubscription = channelsObservable.subscribe({
+            next: (result) => channels.value = result,
+            error: (error) => console.error(error),
+          });
+
+          const showChannel = () => {
+            show.value = true;
+          };
+          const hideChannel = (e) => {
+            show.value = false;
+          };
+
+          const like = () => {
+            likes.value = 1;
+            dislikes.value = 0;
+            action.value = "liked";
+          };
+          const dislike = () => {
+            likes.value = 0;
+            dislikes.value = 1;
+            action.value = "disliked";
+          };
+
+          return {
+            show,
+            channels,
+            likes,
+            dislikes,
+            showChannel,
+            hideChannel,
+            like,
+            dislike,
+            dayjs,
+          };
+        },
+        components: {
+          AccountBookFilled,
+          LikeFilled,
+        },
+      });
+      app.use(antd);
+      app.mount("#app");
+    </script>
+  </body>
+</html>
