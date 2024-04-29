@@ -52,7 +52,11 @@
         </a-form>
       </a-modal>
       <a-list item-layout="horizontal">
-        <a-list-item v-for="item in channels" :key="item.id" @click="showChannel">
+        <a-list-item
+          v-for="item in channels"
+          :key="item.id"
+          @click="showChannel(item.id)"
+        >
           <a-list-item-meta :description="item.description">
             <template #title>
               <a href="#">{{ item.label }}</a>
@@ -71,7 +75,7 @@
         :footer="null"
         @ok="hideChannel"
       >
-        <a-comment>
+        <a-comment  v-for="item in messages" :key="item.id">
           <template #actions>
             <span key="comment-basic-like">
               <a-tooltip title="Like">
@@ -82,7 +86,9 @@
                   <LikeOutlined @click="like" />
                 </template>
               </a-tooltip>
-              <span style="padding-left: 8px; cursor: auto"> {{ likes }} </span>
+              <span style="padding-left: 8px; cursor: auto">
+                {{ likes }}
+              </span>
             </span>
             <span key="comment-basic-dislike">
               <a-tooltip title="Dislike">
@@ -97,24 +103,43 @@
                 {{ dislikes }}
               </span>
             </span>
-            <span key="comment-basic-reply-to">Reply to</span>
           </template>
-          <template #author><a>Han Solo</a></template>
+          <template #author><a>{{item.senderPseudo}}</a></template>
           <template #avatar>
-            <a-avatar src="https://joeschmoe.io/api/v1/random" alt="Han Solo" />
+            <minidenticon-svg
+              :username="item.senderPseudo"
+            ></minidenticon-svg>
           </template>
           <template #content>
-            <p>
-              Nous fournissons une série de principes de conception, de modèles
-              pratiques et des ressources de conception de haute qualité (Sketch
-              et Axure), pour aider les gens créer leurs prototypes de produits
-              de manière magnifique et efficace.
-            </p>
+            <p>{{item.content}}</p>
           </template>
           <template #datetime>
-            <a-tooltip :title="dayjs().format('YYYY-MM-DD HH:mm:ss')">
-              <span>{{ dayjs().fromNow() }}</span>
+            <a-tooltip
+              :title="dayjs(item.createdAt).format('DD-MM-YYYY HH:mm:ss')"
+            >
+              <span>{{ dayjs().from(item.createdAt) }}</span>
             </a-tooltip>
+          </template>
+        </a-comment>
+        <a-comment>
+          <template #avatar>
+            <minidenticon-svg :username="userPseudo"></minidenticon-svg>
+          </template>
+          <template #content>
+            <a-form-item>
+              <a-textarea v-model:value="newMessage" :rows="4" />
+            </a-form-item>
+            <a-form-item>
+              <a-button
+                html-type="submit"
+                :disabled="messageBoxDisabled"
+                :loading="messageInProgress"
+                type="primary"
+                @click="sendNewMessage"
+              >
+                Envoyer
+              </a-button>
+            </a-form-item>
           </template>
         </a-comment>
       </a-modal>
@@ -152,20 +177,36 @@
 
       db.version(1).stores({
         channels: "++id, label",
-        messages: "++id, senderId, channelId, like, dislike",
+        messages:
+          "++id, senderId, senderPseudo, channelId, createdAt, updatedAt, like, dislike",
       });
 
       db.channels
         .bulkPut([
-          { id: 1, label: "General", description: "Le Canal étudiant pour échanger sur la vie universitaire, les cours et les événements." },
-          { id: 2, label: "PWA", description: "Canal PWA : discussions sur le développement et les meilleures pratiques des Progressive Web Apps." },
-          { id: 3, label: "MVC", description: "Canal MVC : Échanges sur l'architecture Model-View-Controller, conseils, et meilleures pratiques." },
+          {
+            id: 1,
+            label: "General",
+            description:
+              "Le Canal étudiant pour échanger sur la vie universitaire, les cours et les événements.",
+          },
+          {
+            id: 2,
+            label: "PWA",
+            description:
+              "Canal PWA : discussions sur le développement et les meilleures pratiques des Progressive Web Apps.",
+          },
+          {
+            id: 3,
+            label: "MVC",
+            description:
+              "Canal MVC : Échanges sur l'architecture Model-View-Controller, conseils, et meilleures pratiques.",
+          },
         ])
         .then(() => {
           return db.channels.toArray();
         })
         .then((channels) => {
-          console.log(channels);
+          //
         })
         .catch((err) => {
           console.log(err);
@@ -174,13 +215,19 @@
       const app = createApp({
         setup() {
           const userId = ref(localStorage.getItem("userId"));
+          const userPseudo = ref(localStorage.getItem("pseudo"));
           
+
           const show = ref(false);
           const channels = ref([]);
+          const currentChannelId = ref(null);
+          const messages = ref([]);
 
           const likes = ref(0);
           const dislikes = ref(0);
           const action = ref();
+          const messageInProgress = ref(false);
+          const newMessage = ref("");
 
           const channelsObservable = liveQuery(() => db.channels.toArray());
           const channelsSubscription = channelsObservable.subscribe({
@@ -188,10 +235,21 @@
             error: (error) => console.error(error),
           });
 
-          const showChannel = () => {
-            show.value = true;
+          const showChannel = (channelId) => {
+            currentChannelId.value = channelId;
+            db.messages
+              .where({ channelId })
+              .sortBy("createdAt")
+              .then((values) => {
+                messages.value = [...values];
+                show.value = true;
+              })
+              .catch((err) => {
+                console.log(err);
+              });
           };
-          const hideChannel = (e) => {
+          const hideChannel = () => {
+            currentChannelId.value = null;
             show.value = false;
           };
 
@@ -210,36 +268,69 @@
             pseudo: "",
           });
 
-          const onSaveUser = ({pseudo}) => {
-            console.log(pseudo);
+          const onSaveUser = ({ pseudo }) => {
             const uuid = crypto.randomUUID();
-            localStorage.setItem('userId', uuid)
-            localStorage.setItem('pseudo', pseudo)
-            userId.value = uuid
+            localStorage.setItem("userId", uuid);
+            localStorage.setItem("pseudo", pseudo);
+            userId.value = uuid;
+          };
+
+          const sendNewMessage = () => {
+            messageInProgress.value = true;
+            setTimeout(() => {
+              const message = {
+                content: newMessage.value,
+                senderId: userId.value,
+                senderPseudo: userPseudo.value,
+                channelId: currentChannelId.value,
+                createdAt: dayjs().format(),
+                updatedAt: dayjs().format(),
+                like: 0,
+                dislike: 0,
+              };
+              db.messages
+                .add(message)
+                .then((msgId) => {
+                  messages.value = [...messages.value, {...message, id: msgId}];
+                  newMessage.value = ''
+                })
+                .catch((err) => {
+                  console.log(err);
+                });
+              messageInProgress.value = false;
+            }, 1000);
           };
 
           const userFormDisabled = computed(() => {
             return !userForm.pseudo;
           });
 
+          const messageBoxDisabled = computed(() => {
+            return !newMessage.value;
+          });
+
           const userNotExist = computed(() => {
             return userId.value === null || userId.value === "";
           });
-           
+
           return {
             show,
             channels,
             likes,
             dislikes,
             userId,
+            userPseudo,
             userNotExist,
             userForm,
             userFormDisabled,
+            newMessage,
+            messages,
             showChannel,
             hideChannel,
             like,
             dislike,
             onSaveUser,
+            sendNewMessage,
             dayjs,
           };
         },
