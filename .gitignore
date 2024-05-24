@@ -1,3 +1,5 @@
 .vscode
 temp.md
 .git
+.DS_Store
+*/.DS_Store

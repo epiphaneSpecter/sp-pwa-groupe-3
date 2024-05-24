@@ -19,6 +19,7 @@
       href="https://cdn.jsdelivr.net/npm/ant-design-vue@4.2.1/dist/reset.min.css"
     />
     <link rel="stylesheet" href="style.css" />
+    <link rel="manifest" href="manifest.webmanifest" />
   </head>
   <body>
     <div id="app">
@@ -75,7 +76,7 @@
         :footer="null"
         @ok="hideChannel"
       >
-        <a-comment  v-for="item in messages" :key="item.id">
+        <a-comment v-for="item in messages" :key="item.id">
           <template #actions>
             <span key="comment-basic-like">
               <a-tooltip title="Like">
@@ -86,9 +87,7 @@
                   <LikeOutlined @click="like" />
                 </template>
               </a-tooltip>
-              <span style="padding-left: 8px; cursor: auto">
-                {{ likes }}
-              </span>
+              <span style="padding-left: 8px; cursor: auto"> {{ likes }} </span>
             </span>
             <span key="comment-basic-dislike">
               <a-tooltip title="Dislike">
@@ -106,9 +105,7 @@
           </template>
           <template #author><a>{{item.senderPseudo}}</a></template>
           <template #avatar>
-            <minidenticon-svg
-              :username="item.senderPseudo"
-            ></minidenticon-svg>
+            <minidenticon-svg :username="item.senderPseudo"></minidenticon-svg>
           </template>
           <template #content>
             <p>{{item.content}}</p>
@@ -117,7 +114,7 @@
             <a-tooltip
               :title="dayjs(item.createdAt).format('DD-MM-YYYY HH:mm:ss')"
             >
-              <span>{{ dayjs().from(item.createdAt) }}</span>
+              <span>{{ dayjs(item.createdAt).from() }}</span>
             </a-tooltip>
           </template>
         </a-comment>
@@ -149,6 +146,7 @@
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <!-- Import dayjs -->
     <script src="https://unpkg.com/dayjs/dayjs.min.js"></script>
+    <script src="https://unpkg.com/dayjs/locale/fr.js"></script>
     <script src="https://unpkg.com/dayjs/plugin/relativeTime.js"></script>
     <script src="https://unpkg.com/dayjs/plugin/customParseFormat.js"></script>
     <script src="https://unpkg.com/dayjs/plugin/weekday.js"></script>
@@ -162,61 +160,43 @@
     <script src="https://unpkg.com/dexie/dist/dexie.js"></script>
 
     <script type="module">
-      const { createApp, ref, reactive, computed } = Vue;
+      const { createApp, ref, reactive, computed, onMounted } = Vue;
       import { minidenticonSvg } from "https://cdn.jsdelivr.net/npm/minidenticons@4.2.1/minidenticons.min.js";
-      import {
-        AccountBookFilled,
-        LikeFilled,
-      } from "https://cdn.jsdelivr.net/npm/@ant-design/icons-vue@7.0.1/+esm";
 
       const { liveQuery } = Dexie;
-
-      dayjs.extend(dayjs_plugin_relativeTime);
-
       var db = new Dexie("StudyDatabase");
 
-      db.version(1).stores({
-        channels: "++id, label",
-        messages:
-          "++id, senderId, senderPseudo, channelId, createdAt, updatedAt, like, dislike",
-      });
+      dayjs.locale("fr");
+      dayjs.extend(dayjs_plugin_relativeTime);
 
-      db.channels
-        .bulkPut([
-          {
-            id: 1,
-            label: "General",
-            description:
-              "Le Canal étudiant pour échanger sur la vie universitaire, les cours et les événements.",
-          },
-          {
-            id: 2,
-            label: "PWA",
-            description:
-              "Canal PWA : discussions sur le développement et les meilleures pratiques des Progressive Web Apps.",
-          },
-          {
-            id: 3,
-            label: "MVC",
-            description:
-              "Canal MVC : Échanges sur l'architecture Model-View-Controller, conseils, et meilleures pratiques.",
-          },
-        ])
-        .then(() => {
-          return db.channels.toArray();
-        })
-        .then((channels) => {
-          //
-        })
-        .catch((err) => {
-          console.log(err);
-        });
+      const registerServiceWorker = async () => {
+        if ("serviceWorker" in navigator) {
+          try {
+            const registration = await navigator.serviceWorker.register(
+              "/sw.js",
+              {
+                scope: "/",
+              }
+            );
+            if (registration.installing) {
+              console.log("Service worker installing");
+            } else if (registration.waiting) {
+              console.log("Service worker installed");
+            } else if (registration.active) {
+              console.log("Service worker active");
+            }
+          } catch (error) {
+            console.error(`Registration failed with ${error}`);
+          }
+        }
+      };
+
+      const CACHE_VERSION = 1;
 
       const app = createApp({
         setup() {
           const userId = ref(localStorage.getItem("userId"));
           const userPseudo = ref(localStorage.getItem("pseudo"));
-          
 
           const show = ref(false);
           const channels = ref([]);
@@ -229,10 +209,64 @@
           const messageInProgress = ref(false);
           const newMessage = ref("");
 
-          const channelsObservable = liveQuery(() => db.channels.toArray());
-          const channelsSubscription = channelsObservable.subscribe({
-            next: (result) => (channels.value = result),
-            error: (error) => console.error(error),
+          
+          const userFormDisabled = computed(() => {
+            return !userForm.pseudo;
+          });
+
+          const messageBoxDisabled = computed(() => {
+            return !newMessage.value;
+          });
+
+          const userNotExist = computed(() => {
+            return userId.value === null || userId.value === "";
+          });
+
+          onMounted(() => {
+            registerServiceWorker();
+
+            db.version(1).stores({
+              channels: "++id, label",
+              messages:
+                "++id, senderId, senderPseudo, channelId, createdAt, updatedAt, like, dislike",
+            });
+
+            db.channels
+              .bulkPut([
+                {
+                  id: 1,
+                  label: "General",
+                  description:
+                    "Le Canal étudiant pour échanger sur la vie universitaire, les cours et les événements.",
+                },
+                {
+                  id: 2,
+                  label: "PWA",
+                  description:
+                    "Canal PWA : discussions sur le développement et les meilleures pratiques des Progressive Web Apps.",
+                },
+                {
+                  id: 3,
+                  label: "MVC",
+                  description:
+                    "Canal MVC : Échanges sur l'architecture Model-View-Controller, conseils, et meilleures pratiques.",
+                },
+              ])
+              .then(() => {
+                return db.channels.toArray();
+              })
+              .then((channels) => {
+                //
+              })
+              .catch((err) => {
+                console.log(err);
+              });
+
+            const channelsObservable = liveQuery(() => db.channels.toArray());
+            const channelsSubscription = channelsObservable.subscribe({
+              next: (result) => (channels.value = result),
+              error: (error) => console.error(error),
+            });
           });
 
           const showChannel = (channelId) => {
@@ -273,6 +307,7 @@
             localStorage.setItem("userId", uuid);
             localStorage.setItem("pseudo", pseudo);
             userId.value = uuid;
+            userPseudo.value = pseudo;
           };
 
           const sendNewMessage = () => {
@@ -291,8 +326,11 @@
               db.messages
                 .add(message)
                 .then((msgId) => {
-                  messages.value = [...messages.value, {...message, id: msgId}];
-                  newMessage.value = ''
+                  messages.value = [
+                    ...messages.value,
+                    { ...message, id: msgId },
+                  ];
+                  newMessage.value = "";
                 })
                 .catch((err) => {
                   console.log(err);
@@ -300,18 +338,6 @@
               messageInProgress.value = false;
             }, 1000);
           };
-
-          const userFormDisabled = computed(() => {
-            return !userForm.pseudo;
-          });
-
-          const messageBoxDisabled = computed(() => {
-            return !newMessage.value;
-          });
-
-          const userNotExist = computed(() => {
-            return userId.value === null || userId.value === "";
-          });
 
           return {
             show,
@@ -333,10 +359,6 @@
             sendNewMessage,
             dayjs,
           };
-        },
-        components: {
-          AccountBookFilled,
-          LikeFilled,
         },
       });
       app.use(antd);
