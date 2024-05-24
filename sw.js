@@ -35,6 +35,16 @@ self.addEventListener("fetch", (event) => {
 });
 
 
+self.addEventListener('push', function(event) {
+  const payload = event.data ? event.data.text() : 'no payload';
+  event.waitUntil(
+    self.registration.showNotification('Study Notification', {
+      body: payload,
+    })
+  );
+});
+
+
 const cacheFirst = async (request) => {
   const responseFromCache = await caches.match(request);
   if (responseFromCache) {
