@@ -1,24 +1,261 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  background: rgba(0, 0, 0, 0.5);
+}
+
+body {
+  font-family: "Arial", sans-serif;
+  line-height: 1.6;
+  background: #f0f2f5;
+  color: #333;
+  position: relative;
+  max-width: 800px;
+  margin: auto;
+}
+
+/* Header Styles */
+.header {
+  background: #001529;
+  color: white;
+  padding: 20px;
+  text-align: center;
+}
+
+.header h1 {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.header p {
+  font-size: 1.2rem;
+}
+
+/* Main content */
+main {
+  padding: 20px;
+}
+
+/* List item */
+
+.ant-spin-container {
+  /**/
+}
+
+.ant-list-item {
+  cursor: pointer;
+  background: white;
+  border-radius: 10px;
+  margin-bottom: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s;
+}
+
+.ant-list-item:hover {
+  transform: translateY(-5px);
+}
+
+.ant-list-item .ant-list-item-meta {
+  padding: 10px;
+}
+
+.ant-list-item a {
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.ant-list-item a:hover {
+  color: #40ca3f !important;
+}
+
+.ant-avatar {
+  background-color: #02bd00;
+}
+
+/* Modal */
+.ant-modal {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+}
+
+.ant-modal-content {
+  border-radius: 10px;
+}
+
+.ant-modal-content .ant-modal-header .ant-modal-title {
+  text-align: center;
+  font-size: 1.5rem;
+}
+
+.ant-modal-wrap.full-screen-modal {
+  display: flex;
+}
+
 .full-screen-modal .ant-modal {
-    max-width: 100%;
-    top: 0;
-    padding-bottom: 0;
-    margin: 0;
+  max-width: 800px !important;
+  height: 80vh !important;
+  width: 100% !important;
+  margin: auto;
+  padding: 0 20px;
 }
 
 .full-screen-modal .ant-modal-content {
-    display: flex;
-    flex-direction: column;
-    height: calc(100vh);
-    border-radius: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
 }
- 
-.full-screen-modal .ant-modal-body {
-    flex: 1;
+
+.ant-modal-mask {
+  background-color: rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Username modal */
+.pseudo-modal {
+  display: flex;
+}
+
+.pseudo-modal .ant-modal {
+  max-width: 400px;
+  height: auto;
+}
+
+.pseudo-modal .ant-modal-content {
+  padding: 20px;
+  text-align: center;
+}
+
+.pseudo-modal .ant-modal-title {
+  width: 100%;
+  text-align: center;
+  font-size: 1.5rem;
+}
+
+.pseudo-modal .ant-modal-close {
+  display: none;
+}
+
+/* Messages */
+.ant-comment {
+  background: white;
+  border-radius: 10px;
+  margin-bottom: 10px;
+  padding: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.4);
+}
+
+.ant-comment .ant-comment-content {
+  padding-left: 20px;
+}
+
+.ant-comment p {
+  margin-bottom: 10px;
+}
+
+.ant-comment .ant-comment-actions {
+  display: flex;
+  gap: 10px;
+}
+
+/* Footer */
+footer {
+  background: #001529;
+  color: white;
+  text-align: center;
+  padding: 10px;
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+}
+
+footer p {
+  margin: 0;
+}
+
+/* Button */
+button.ant-btn {
+  background: #02bd00;
+  border: none;
+}
+
+.ant-modal button.ant-btn:not(:disabled):hover {
+  background: #40ca3f;
+}
+
+button.ant-btn[disabled] {
+  background: #d9d9d9;
+  border: none;
+}
+
+/* Form */
+.ant-form-item {
+  margin-bottom: 15px;
+}
+
+.ant-input,
+textarea {
+  border-radius: 5px;
+  border: 1px solid #d9d9d9;
+}
+
+.ant-input:focus,
+textarea:focus {
+  border-color: #1890ff;
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+}
+
+/* Tooltip */
+.ant-form-item-tooltip {
+  color: white;
+  background: #333;
+}
+
+/* Avatar */
+minidenticon-svg {
+  border-radius: 50%;
+  background: #d1d1d1;
 }
 
 minidenticon-svg svg {
-    border-radius: 50%;
-    background-color: rgb(255, 255, 255);
-    height: 48px;
-    width: 48px;
-  };
+  border-radius: 50%;
+  background-color: rgb(255, 255, 255);
+  height: 48px;
+  width: 48px;
+}
+
+/* Media queries */
+
+@media (max-width: 768px) {
+  .header h1 {
+    font-size: 2rem;
+  }
+  .header p {
+    font-size: 1rem;
+  }
+  main {
+    padding: 10px;
+  }
+  .full-screen-modal .ant-modal {
+    max-width: 100vw;
+  }
+  minidenticon-svg svg {
+    height: 32px;
+    width: 32px;
+  }
+  .comment-content {
+    display: flex;
+    flex-direction: column;
+  }
+  .comment-content p,
+  .comment-content .actions {
+    margin-left: 0;
+  }
+}
