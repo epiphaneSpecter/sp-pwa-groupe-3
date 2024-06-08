@@ -81,12 +81,29 @@
 
         <a-modal
           v-model:open="show"
-          :title="channelTitle"
           wrap-class-name="full-screen-modal"
+          :closable="false"
           :footer="null"
           @ok="hideChannel"
         >
-          <a-comment v-for="item in messages" :key="item.id">
+          <template #title>
+            <div class="modal-header-wrapper">
+              <span>{{ channelTitle }}</span>
+              <button
+                type="button"
+                aria-label="Close"
+                class="ant-modal-close"
+                @click="hideChannel"
+              >
+                x
+              </button>
+            </div>
+          </template>
+          <a-comment
+            v-for="item in messages"
+            :key="item.id"
+            :class="{ 'actual-user-comment': isCurrentUser(item.senderId) }"
+          >
             <template #actions>
               <span key="comment-basic-like">
                 <a-tooltip title="Like">
@@ -97,9 +114,7 @@
                     <LikeOutlined @click="like" />
                   </template>
                 </a-tooltip>
-                <span style="padding-left: 8px; cursor: auto">
-                  {{ likes }}
-                </span>
+                <span style="padding-left: 8px; cursor: auto">{{ likes }}</span>
               </span>
               <span key="comment-basic-dislike">
                 <a-tooltip title="Dislike">
@@ -110,19 +125,19 @@
                     <DislikeOutlined @click="dislike" />
                   </template>
                 </a-tooltip>
-                <span style="padding-left: 8px; cursor: auto">
-                  {{ dislikes }}
-                </span>
+                <span style="padding-left: 8px; cursor: auto"
+                  >{{ dislikes }}</span
+                >
               </span>
             </template>
-            <template #author><a>{{item.senderPseudo}}</a></template>
+            <template #author><a>{{ item.senderPseudo }}</a></template>
             <template #avatar>
               <minidenticon-svg
                 :username="item.senderPseudo"
               ></minidenticon-svg>
             </template>
             <template #content>
-              <p>{{item.content}}</p>
+              <p>{{ item.content }}</p>
             </template>
             <template #datetime>
               <a-tooltip
@@ -138,7 +153,12 @@
             </template>
             <template #content>
               <a-form-item>
-                <a-textarea v-model:value="newMessage" :rows="4" />
+                <a-textarea
+                  v-model:value="newMessage"
+                  :rows="4"
+                  @keydown="handleKeydown"
+                  :disabled="messageInProgress"
+                />
               </a-form-item>
               <a-form-item>
                 <a-button
@@ -341,11 +361,19 @@
               .then((values) => {
                 messages.value = [...values];
                 show.value = true;
+                setTimeout(() => {
+                  const container =
+                    document.querySelector(".ant-modal-content");
+                  if (container) {
+                    container.scrollTop = container.scrollHeight;
+                  }
+                }, 0);
               })
               .catch((err) => {
                 console.log(err);
               });
           };
+
           const hideChannel = () => {
             currentChannelId.value = null;
             show.value = false;
@@ -375,7 +403,12 @@
           };
 
           const sendNewMessage = () => {
+            if (newMessage.value.trim() === "") {
+              return;
+            }
+
             messageInProgress.value = true;
+
             setTimeout(() => {
               const message = {
                 content: newMessage.value,
@@ -387,6 +420,7 @@
                 like: 0,
                 dislike: 0,
               };
+
               db.messages
                 .add(message)
                 .then((msgId) => {
@@ -394,7 +428,6 @@
                     ...messages.value,
                     { ...message, id: msgId },
                   ];
-                  //
                   fetch(
                     "http://follyepiphaneavlah.alwaysdata.net/push-server/sendNotification",
                     {
@@ -411,12 +444,33 @@
                     }
                   );
                   newMessage.value = "";
+
+                  setTimeout(() => {
+                    const container =
+                      document.querySelector(".ant-modal-content");
+                    if (container) {
+                      container.scrollTop = container.scrollHeight;
+                    }
+                  }, 0);
                 })
                 .catch((err) => {
                   console.log(err);
+                })
+                .finally(() => {
+                  messageInProgress.value = false;
                 });
-              messageInProgress.value = false;
             }, 1000);
+          };
+
+          const isCurrentUser = (senderId) => {
+            return senderId === userId.value;
+          };
+
+          const handleKeydown = (event) => {
+            if (event.key === "Enter" && !event.shiftKey) {
+              event.preventDefault();
+              sendNewMessage();
+            }
           };
 
           return {
@@ -438,6 +492,8 @@
             dislike,
             onSaveUser,
             sendNewMessage,
+            isCurrentUser,
+            handleKeydown,
             dayjs,
           };
         },
