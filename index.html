@@ -18,6 +18,11 @@
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/ant-design-vue@4.2.1/dist/reset.min.css"
     />
+    <!-- Import Font Awesome -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+    />
     <link rel="stylesheet" href="style.css" />
     <link rel="manifest" href="manifest.webmanifest" />
   </head>
@@ -107,27 +112,26 @@
             <template #actions>
               <span key="comment-basic-like">
                 <a-tooltip title="Like">
-                  <template v-if="action === 'liked'">
-                    <LikeFilled @click="like" />
-                  </template>
-                  <template v-else>
-                    <LikeOutlined @click="like" />
-                  </template>
-                </a-tooltip>
-                <span style="padding-left: 8px; cursor: auto">{{ likes }}</span>
+                  <i
+                    :class="['fa', item.action === 'liked' ? 'fa-thumbs-up' : 'fa-regular fa-thumbs-up']"
+                    @click="!isCurrentUser(item.senderId) && likeComment(item.id)"
+                  ></i>
+
+                  <span style="padding-left: 8px; cursor: auto"
+                    >{{ item.likes }}</span
+                  ></a-tooltip
+                >
               </span>
               <span key="comment-basic-dislike">
                 <a-tooltip title="Dislike">
-                  <template v-if="action === 'disliked'">
-                    <DislikeFilled @click="dislike" />
-                  </template>
-                  <template v-else>
-                    <DislikeOutlined @click="dislike" />
-                  </template>
+                  <i
+                    :class="['fa', item.action === 'disliked' ? 'fa-thumbs-down' : 'fa-regular fa-thumbs-down']"
+                    @click="!isCurrentUser(item.senderId) && dislikeComment(item.id)"
+                  ></i>
+                  <span style="padding-left: 8px; cursor: auto"
+                    >{{ item.dislikes }}</span
+                  >
                 </a-tooltip>
-                <span style="padding-left: 8px; cursor: auto"
-                  >{{ dislikes }}</span
-                >
               </span>
             </template>
             <template #author><a>{{ item.senderPseudo }}</a></template>
@@ -287,9 +291,6 @@
           const currentChannelId = ref(null);
           const messages = ref([]);
 
-          const likes = ref(0);
-          const dislikes = ref(0);
-          const action = ref();
           const messageInProgress = ref(false);
           const newMessage = ref("");
 
@@ -311,7 +312,7 @@
             db.version(1).stores({
               channels: "++id, label",
               messages:
-                "++id, senderId, senderPseudo, channelId, createdAt, updatedAt, like, dislike",
+                "++id, senderId, senderPseudo, channelId, createdAt, updatedAt, likes, dislikes, action",
             });
 
             db.channels
@@ -379,15 +380,64 @@
             show.value = false;
           };
 
-          const like = () => {
-            likes.value = 1;
-            dislikes.value = 0;
-            action.value = "liked";
+          const likeComment = async (messageId) => {
+            const message = messages.value.find((msg) => msg.id === messageId);
+            if (!message) return;
+
+            if (message.action === "liked") {
+              // Already liked, undo like
+              await db.messages.update(messageId, {
+                likes: message.likes - 1,
+                action: null,
+              });
+            } else {
+              // Like the comment
+              await db.messages.update(messageId, {
+                likes: message.likes + 1,
+                dislikes:
+                  message.action === "disliked"
+                    ? message.dislikes - 1
+                    : message.dislikes,
+                action: "liked",
+              });
+            }
+            refreshMessages();
           };
-          const dislike = () => {
-            likes.value = 0;
-            dislikes.value = 1;
-            action.value = "disliked";
+
+          const dislikeComment = async (messageId) => {
+            const message = messages.value.find((msg) => msg.id === messageId);
+            if (!message) return;
+
+            if (message.action === "disliked") {
+              // Already disliked, undo dislike
+              await db.messages.update(messageId, {
+                dislikes: message.dislikes - 1,
+                action: null,
+              });
+            } else {
+              // Dislike the comment
+              await db.messages.update(messageId, {
+                dislikes: message.dislikes + 1,
+                likes:
+                  message.action === "liked"
+                    ? message.likes - 1
+                    : message.likes,
+                action: "disliked",
+              });
+            }
+            refreshMessages();
+          };
+
+          const refreshMessages = () => {
+            db.messages
+              .where({ channelId: currentChannelId.value })
+              .sortBy("createdAt")
+              .then((values) => {
+                messages.value = [...values];
+              })
+              .catch((err) => {
+                console.log(err);
+              });
           };
 
           const userForm = reactive({
@@ -417,8 +467,9 @@
                 channelId: currentChannelId.value,
                 createdAt: dayjs().format(),
                 updatedAt: dayjs().format(),
-                like: 0,
-                dislike: 0,
+                likes: 0,
+                dislikes: 0,
+                action: null,
               };
 
               db.messages
@@ -477,8 +528,6 @@
             show,
             channels,
             channelTitle,
-            likes,
-            dislikes,
             userId,
             userPseudo,
             userNotExist,
@@ -488,8 +537,8 @@
             messages,
             showChannel,
             hideChannel,
-            like,
-            dislike,
+            likeComment,
+            dislikeComment,
             onSaveUser,
             sendNewMessage,
             isCurrentUser,
@@ -498,6 +547,7 @@
           };
         },
       });
+
       app.use(antd);
       app.mount("#app");
     </script>

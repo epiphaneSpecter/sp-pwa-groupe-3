@@ -14,7 +14,7 @@ body {
   background: #f0f2f5;
   color: #333;
   position: relative;
-  max-width: 800px;
+  max-width: 650px;
   margin: auto;
 }
 
@@ -74,7 +74,7 @@ main {
 
 /* Modal */
 .full-screen-modal .ant-modal {
-  max-width: 800px !important;
+  max-width: 650px !important;
   height: 100% !important;
   width: 100% !important;
   display: flex;
@@ -166,11 +166,12 @@ main {
 }
 
 .ant-comment p {
-  margin-bottom: 10px;
+  font-size: 1rem;
 }
 
 .ant-comment .ant-comment-actions {
   display: flex;
+  justify-content: right;
   gap: 10px;
 }
 
@@ -182,16 +183,13 @@ main {
 }
 
 .actual-user-comment .ant-comment-avatar,
-.actual-user-comment .ant-comment-content-author-name,
-.actual-user-comment .ant-comment-actions {
+.actual-user-comment .ant-comment-content-author-name {
   display: none;
 }
 
 .actual-user-comment .ant-comment-content {
   background: #02bd00;
   border-radius: 1rem 1rem 0 1rem;
-  display: flex;
-  flex-flow: column nowrap;
 }
 
 .actual-user-comment .ant-comment-content-detail,
@@ -199,8 +197,13 @@ main {
   color: white;
 }
 
-.actual-user-comment .ant-comment-content-author {
-  order: 2;
+.actual-user-comment .ant-comment-actions span,
+.actual-user-comment .ant-comment-actions i {
+  cursor: default;
+}
+
+.actual-user-comment .ant-comment-content .ant-comment-actions span:hover {
+  color: rgba(0, 0, 0, 0.45);
 }
 
 /*Send message*/
