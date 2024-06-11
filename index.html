@@ -238,34 +238,55 @@
                 scope: "/",
               }
             );
-            subscription = await registration.pushManager.getSubscription();
 
-            if (!subscription) {
-              const response = await fetch(
-                "http://follyepiphaneavlah.alwaysdata.net/push-server/vapidPublicKey"
-              );
-              const vapidPublicKey = await response.text();
+            var serviceWorker = null;
 
-              const convertedVapidKey = urlBase64ToUint8Array(vapidPublicKey);
-
-              subscription = await registration.pushManager.subscribe({
-                userVisibleOnly: true,
-                applicationServerKey: convertedVapidKey,
-              });
+            if (registration.installing) {
+              serviceWorker = registration.installing;
+            } else if (registration.waiting) {
+              serviceWorker = registration.waiting;
+            } else if (registration.active) {
+              serviceWorker = registration.active;
             }
 
-            fetch(
-              "http://follyepiphaneavlah.alwaysdata.net/push-server/register",
-              {
-                method: "post",
-                headers: {
-                  "Content-type": "application/json",
-                },
-                body: JSON.stringify({
-                  subscription: subscription,
-                }),
-              }
-            );
+            if (serviceWorker) {
+              serviceWorker.addEventListener("statechange", async (e) => {
+                if (e.target.state == "activated") {
+                  subscription =
+                    await registration.pushManager.getSubscription();
+
+                  console.log(subscription, "subscription");
+
+                  if (!subscription) {
+                    const response = await fetch(
+                      "http://follyepiphaneavlah.alwaysdata.net/push-server/vapidPublicKey"
+                    );
+                    const vapidPublicKey = await response.text();
+
+                    const convertedVapidKey =
+                      urlBase64ToUint8Array(vapidPublicKey);
+
+                    subscription = await registration.pushManager.subscribe({
+                      userVisibleOnly: true,
+                      applicationServerKey: convertedVapidKey,
+                    });
+                  }
+
+                  fetch(
+                    "http://follyepiphaneavlah.alwaysdata.net/push-server/register",
+                    {
+                      method: "post",
+                      headers: {
+                        "Content-type": "application/json",
+                      },
+                      body: JSON.stringify({
+                        subscription: subscription,
+                      }),
+                    }
+                  );
+                }
+              });
+            }
           } catch (error) {
             console.error(`Registration failed with ${error}`);
           }
@@ -470,6 +491,7 @@
                 likes: 0,
                 dislikes: 0,
                 action: null,
+
               };
 
               db.messages

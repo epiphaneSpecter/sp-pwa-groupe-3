@@ -67,6 +67,9 @@ const cacheFirst = async (request) => {
 }
 
 const putInCache = async (request, response) => {
-  const cache = await caches.open(`STUDY_CACHE_${CACHE_VESION}`);
-  await cache.put(request, response);
+  if (request.method === "GET" && (request.url.startsWith('http') || request.url.startsWith('https'))) {
+    const cache = await caches.open(`STUDY_CACHE_${CACHE_VESION}`);
+    await cache.put(request, response);
+  }
+  
 }
