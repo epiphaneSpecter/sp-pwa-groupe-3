@@ -1,24 +1,385 @@
-.full-screen-modal .ant-modal {
-    max-width: 100%;
-    top: 0;
-    padding-bottom: 0;
-    margin: 0;
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
-.full-screen-modal .ant-modal-content {
-    display: flex;
-    flex-direction: column;
-    height: calc(100vh);
-    border-radius: 0;
+html {
+  background: rgba(0, 0, 0, 0.5);
 }
- 
+
+body {
+  font-family: "Inter", sans-serif;
+  line-height: 1.6;
+  background: #f0f2f5;
+  color: #333;
+  position: relative;
+  max-width: 650px;
+  margin: auto;
+}
+
+/* Header */
+.header {
+  background: #001529;
+  color: white;
+  padding: 20px;
+  text-align: center;
+}
+
+.header h1 {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.header p {
+  font-size: 1.2rem;
+}
+
+/* Main content */
+main {
+  padding: 20px;
+}
+
+/* List item */
+
+.ant-list-item {
+  cursor: pointer;
+  background: white;
+  border-radius: 10px;
+  margin-bottom: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s;
+}
+
+.ant-list-item:hover {
+  transform: translateY(-5px);
+}
+
+.ant-list-item .ant-list-item-meta {
+  padding: 10px;
+}
+
+.ant-list-item a {
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.ant-list-item a:hover {
+  color: #40ca3f !important;
+}
+
+.ant-avatar {
+  background-color: #02bd00;
+}
+
+/* Modal */
+.full-screen-modal .ant-modal {
+  max-width: 650px !important;
+  height: 100% !important;
+  width: 100% !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  position: unset;
+}
+
+.full-screen-modal .ant-modal .ant-modal-content {
+  display: flex;
+  flex-flow: column nowrap;
+  width: 100%;
+  height: 100%;
+  border-radius: 0;
+  padding: 0;
+  overflow-y: auto;
+  position: relative;
+}
+
+.full-screen-modal .ant-modal-content .ant-modal-header {
+  background: #001529;
+  text-align: center;
+  border-radius: 0;
+  margin: 0;
+  padding: 1rem;
+  position: sticky;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 10;
+}
+
+.full-screen-modal .ant-modal-content .modal-header-wrapper {
+  display: flex;
+  align-items: center;
+  color: white;
+  font-size: 1.5rem;
+  position: relative;
+}
+
+.full-screen-modal .ant-modal-content .modal-header-wrapper span {
+  flex: 1;
+}
+
+.full-screen-modal .ant-modal-content .ant-modal-close {
+  color: white;
+  position: unset;
+  width: unset;
+  height: unset;
+}
+
+.full-screen-modal .ant-modal-content .ant-modal-close:hover {
+  color: #40ca3f;
+}
+
 .full-screen-modal .ant-modal-body {
-    flex: 1;
+  display: flex;
+  flex-flow: column nowrap;
+  height: 100%;
+}
+
+/* Messages */
+.ant-comment {
+  padding: 1rem 0.4rem;
+}
+
+.ant-comment .ant-comment-inner {
+  padding: 0;
+}
+
+.ant-comment-content {
+  background: #00152914;
+  border-radius: 1rem 1rem 1rem 0;
+  padding: 1rem;
+  max-width: 50%;
+}
+
+.ant-comment-avatar {
+  align-self: flex-end;
+}
+
+.ant-comment-content .ant-comment-content-author {
+  justify-content: space-between;
+}
+
+.ant-comment-content .ant-comment-content-author a {
+  cursor: default;
+}
+
+.ant-comment p {
+  font-size: 1rem;
+}
+
+.ant-comment .ant-comment-actions {
+  display: flex;
+  justify-content: right;
+  gap: 10px;
+}
+
+/* User message */
+
+.actual-user-comment .ant-comment-inner,
+.actual-user-comment .ant-comment-content-author {
+  justify-content: end;
+}
+
+.actual-user-comment .ant-comment-avatar,
+.actual-user-comment .ant-comment-content-author-name {
+  display: none;
+}
+
+.actual-user-comment .ant-comment-content {
+  background: #02bd00;
+  border-radius: 1rem 1rem 0 1rem;
+}
+
+.actual-user-comment .ant-comment-content-detail,
+.actual-user-comment .ant-comment-content-author-time {
+  color: white;
+}
+
+.actual-user-comment .ant-comment-actions span,
+.actual-user-comment .ant-comment-actions i {
+  cursor: default;
+}
+
+.actual-user-comment .ant-comment-content .ant-comment-actions span:hover {
+  color: rgba(0, 0, 0, 0.45);
+}
+
+/*Send message*/
+
+.ant-comment:last-child {
+  flex: 1;
+  display: flex;
+  flex-flow: column nowrap;
+  justify-content: end;
+  padding: 0;
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+}
+
+.ant-comment:last-child .ant-comment-avatar,
+.ant-comment:last-child .ant-comment-content-author {
+  display: none;
+}
+
+.ant-comment:last-child .ant-comment-content {
+  max-width: 100%;
+  width: 100%;
+  background: #001529;
+  border-radius: 0;
+}
+
+.ant-comment:last-child .ant-comment-content-detail {
+  display: flex;
+  align-content: center;
+  align-items: center;
+  background: #fff;
+  border-radius: 5px;
+  border: 1px solid #d9d9d9;
+  padding: 0.2rem 0.5rem;
+  gap: 0.5rem;
+}
+
+.ant-comment:last-child .ant-form-item {
+  margin: 0;
+}
+
+.ant-comment:last-child .ant-form-item:first-child {
+  flex: 1;
+}
+
+.ant-comment:last-child textarea {
+  resize: none;
+  padding: 0;
+  border: unset;
+  height: 1rem;
+  font-size: 1rem;
+}
+
+.ant-comment:last-child textarea:focus {
+  border-color: unset;
+  box-shadow: none;
+}
+
+/* Username modal */
+.pseudo-modal {
+  display: flex;
+}
+
+.pseudo-modal .ant-modal {
+  max-width: 400px;
+  height: fit-content;
+}
+
+.pseudo-modal .ant-modal-content {
+  padding: 20px;
+  text-align: center;
+}
+
+.pseudo-modal .ant-modal-title {
+  width: 100%;
+  text-align: center;
+  font-size: 1.5rem;
+}
+
+.pseudo-modal .ant-modal-close {
+  display: none;
+}
+
+/* Footer */
+footer {
+  background: #001529;
+  color: white;
+  text-align: center;
+  padding: 10px;
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+}
+
+footer p {
+  margin: 0;
+}
+
+/* Button */
+button.ant-btn {
+  background: #02bd00;
+  border: none;
+}
+
+.ant-modal button.ant-btn:not(:disabled):hover {
+  background: #40ca3f;
+}
+
+button.ant-btn[disabled] {
+  background: #d9d9d9;
+  border: none;
+}
+
+/* Form */
+.ant-form-item {
+  margin-bottom: 15px;
+}
+
+.ant-input,
+textarea {
+  border-radius: 5px;
+  border: 1px solid #d9d9d9;
+}
+
+.ant-input:focus,
+textarea:focus {
+  border-color: #1890ff;
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+}
+
+/* Tooltip */
+.ant-form-item-tooltip {
+  color: white;
+  background: #333;
+}
+
+/* Avatar */
+minidenticon-svg {
+  border-radius: 50%;
+  background: #d1d1d1;
 }
 
 minidenticon-svg svg {
-    border-radius: 50%;
-    background-color: rgb(255, 255, 255);
-    height: 48px;
-    width: 48px;
-  };
+  border-radius: 50%;
+  background-color: rgb(255, 255, 255);
+  height: 48px;
+  width: 48px;
+  cursor: auto;
+}
+
+/* Media queries */
+
+@media (max-width: 768px) {
+  .header h1 {
+    font-size: 2rem;
+  }
+  .header p {
+    font-size: 1rem;
+  }
+  main {
+    padding: 10px;
+  }
+  .full-screen-modal .ant-modal {
+    max-width: 100vw;
+  }
+  minidenticon-svg svg {
+    height: 32px;
+    width: 32px;
+  }
+  .comment-content {
+    display: flex;
+    flex-direction: column;
+  }
+  .comment-content p,
+  .comment-content .actions {
+    margin-left: 0;
+  }
+}
