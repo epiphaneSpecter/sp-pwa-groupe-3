@@ -253,7 +253,7 @@ main {
 .ant-comment:last-child textarea {
   resize: none;
   border: unset;
-  height: 1rem;
+  height: 33px;
   font-size: 1rem;
   max-height: 12rem;
 }
