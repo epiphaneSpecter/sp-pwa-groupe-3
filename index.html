@@ -586,7 +586,10 @@
                       },
                       body: JSON.stringify({
                         subscription: subscription,
-                        payload: newMessage.value,
+                        payload: {
+                          title: `Un nouveau de message de ${userPseudo.value}`,
+                          body: newMessage.value
+                        },
                         delay: 0,
                         ttl: 1000,
                       }),
@@ -596,7 +599,7 @@
 
                   const textarea = document.querySelector(".message-input");
                   if (textarea) {
-                    textarea.style.height = "1rem";
+                    textarea.style.height = "33px";
                   }
 
                   setTimeout(() => {
@@ -633,7 +636,7 @@
           const autoResize = (e) => {
             const textarea = e.target;
             if (textarea.value.trim() === "") {
-              textarea.style.height = "1rem";
+              textarea.style.height = "33px";
             } else {
               textarea.style.height = textarea.scrollHeight + "px";
             }

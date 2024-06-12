@@ -53,9 +53,14 @@ app.post(baseRoute + "sendNotification", function (req, res) {
     TTL: req.body.ttl,
   };
 
+  const notificationPayload = JSON.stringify({
+    title: payload.title,
+    body: payload.body,
+  });
+
   setTimeout(function () {
     webPush
-      .sendNotification(subscription, payload, options)
+      .sendNotification(subscription, notificationPayload, options)
       .then(function () {
         res.sendStatus(201);
       })
