@@ -78,7 +78,7 @@
                 <a href="#">{{ item.label }}</a>
               </template>
               <template #avatar>
-                <a-avatar src="https://joeschmoe.io/api/v1/random" />
+                <a-avatar :src="generateAvatarUrl(item.label)" />
               </template>
             </a-list-item-meta>
           </a-list-item>
@@ -100,7 +100,7 @@
                 class="ant-modal-close"
                 @click="hideChannel"
               >
-                x
+                <i class="fa-regular fa-circle-xmark"></i>
               </button>
             </div>
           </template>
@@ -159,15 +159,19 @@
               <a-form-item>
                 <a-textarea
                   v-model:value="newMessage"
-                  :rows="4"
+                  :rows="1"
+                  class="message-input"
                   @keydown="handleKeydown"
+                  @input="autoResize"
+                  placeholder="Votre message..."
                   :disabled="messageInProgress"
+                  ref="textareaRef"
                 />
               </a-form-item>
               <a-form-item>
                 <a-button
                   html-type="submit"
-                  :disabled="messageBoxDisabled"
+                  :disabled="messageBoxDisabled || messageInProgress"
                   :loading="messageInProgress"
                   type="primary"
                   @click="sendNewMessage"
@@ -204,7 +208,7 @@
     <script src="https://unpkg.com/dexie/dist/dexie.js"></script>
 
     <script type="module">
-      const { createApp, ref, reactive, computed, onMounted } = Vue;
+      const { createApp, ref, reactive, computed, onMounted, nextTick } = Vue;
       import { minidenticonSvg } from "https://cdn.jsdelivr.net/npm/minidenticons@4.2.1/minidenticons.min.js";
 
       const { liveQuery } = Dexie;
@@ -259,7 +263,7 @@
 
                   if (!subscription) {
                     const response = await fetch(
-                      "http://follyepiphaneavlah.alwaysdata.net/push-server/vapidPublicKey"
+                      "https://follyepiphaneavlah.alwaysdata.net/push-server/vapidPublicKey"
                     );
                     const vapidPublicKey = await response.text();
 
@@ -273,7 +277,7 @@
                   }
 
                   fetch(
-                    "http://follyepiphaneavlah.alwaysdata.net/push-server/register",
+                    "https://follyepiphaneavlah.alwaysdata.net/push-server/register",
                     {
                       method: "post",
                       headers: {
@@ -315,6 +319,8 @@
           const messageInProgress = ref(false);
           const newMessage = ref("");
 
+          const textareaRef = ref(null);
+
           const userFormDisabled = computed(() => {
             return !userForm.pseudo;
           });
@@ -340,7 +346,7 @@
               .bulkPut([
                 {
                   id: 1,
-                  label: "General",
+                  label: "Général",
                   description:
                     "Le Canal étudiant pour échanger sur la vie universitaire, les cours et les événements.",
                 },
@@ -362,6 +368,12 @@
               })
               .then((channelsArray) => {
                 channels.value = channelsArray;
+                return db.messages.count();
+              })
+              .then((count) => {
+                if (count === 0) {
+                  insertInitialMessages();
+                }
               })
               .catch((err) => {
                 console.log(err);
@@ -373,6 +385,71 @@
               error: (error) => console.error(error),
             });
           });
+
+          const insertInitialMessages = () => {
+            db.messages.bulkPut([
+              {
+                senderId: "1",
+                senderPseudo: "Biloute",
+                channelId: 1,
+                content:
+                  "Salut tout le monde! Prêts pour une session de code endiablée?",
+                createdAt: dayjs().subtract(2, "day").format(),
+                updatedAt: dayjs().subtract(2, "day").format(),
+                likes: 1,
+                dislikes: 0,
+                action: null,
+              },
+              {
+                senderId: "2",
+                senderPseudo: "Fifi",
+                channelId: 1,
+                content:
+                  "Salut Biloute, yes à fond! J'ai hâte de travailler sur notre app PWA",
+                createdAt: dayjs().subtract(1, "day").format(),
+                updatedAt: dayjs().subtract(1, "day").format(),
+                likes: 2,
+                dislikes: 0,
+                action: null,
+              },
+              {
+                senderId: "3",
+                senderPseudo: "Véro",
+                channelId: 2,
+                content:
+                  "Quelqu'un travaille sur le projet PWA en ce moment? J'ai besoin de conseils",
+                createdAt: dayjs().subtract(12, "hour").format(),
+                updatedAt: dayjs().subtract(12, "hour").format(),
+                likes: 0,
+                dislikes: 0,
+                action: null,
+              },
+              {
+                senderId: "1",
+                senderPseudo: "Biloute",
+                channelId: 3,
+                content:
+                  "Je galère à bien organiser mon code en MVC... faudrait que je reprenne les cours du Professeur NGU LEUBOU !",
+                createdAt: dayjs().subtract(6, "hour").format(),
+                updatedAt: dayjs().subtract(6, "hour").format(),
+                likes: 1,
+                dislikes: 1,
+                action: null,
+              },
+              {
+                senderId: "4",
+                senderPseudo: "Domi",
+                channelId: 3,
+                content:
+                  "Il a tout expliqué.. il suffisait de suivre les cours!",
+                createdAt: dayjs().subtract(6, "hour").format(),
+                updatedAt: dayjs().subtract(6, "hour").format(),
+                likes: 0,
+                dislikes: 2,
+                action: null,
+              },
+            ]);
+          };
 
           const showChannel = (channelId, channelLabel) => {
             currentChannelId.value = channelId;
@@ -406,13 +483,11 @@
             if (!message) return;
 
             if (message.action === "liked") {
-              // Already liked, undo like
               await db.messages.update(messageId, {
                 likes: message.likes - 1,
                 action: null,
               });
             } else {
-              // Like the comment
               await db.messages.update(messageId, {
                 likes: message.likes + 1,
                 dislikes:
@@ -430,13 +505,11 @@
             if (!message) return;
 
             if (message.action === "disliked") {
-              // Already disliked, undo dislike
               await db.messages.update(messageId, {
                 dislikes: message.dislikes - 1,
                 action: null,
               });
             } else {
-              // Dislike the comment
               await db.messages.update(messageId, {
                 dislikes: message.dislikes + 1,
                 likes:
@@ -491,7 +564,6 @@
                 likes: 0,
                 dislikes: 0,
                 action: null,
-
               };
 
               db.messages
@@ -502,7 +574,7 @@
                     { ...message, id: msgId },
                   ];
                   fetch(
-                    "http://follyepiphaneavlah.alwaysdata.net/push-server/sendNotification",
+                    "https://follyepiphaneavlah.alwaysdata.net/push-server/sendNotification",
                     {
                       method: "post",
                       headers: {
@@ -518,6 +590,11 @@
                   );
                   newMessage.value = "";
 
+                  const textarea = document.querySelector(".message-input");
+                  if (textarea) {
+                    textarea.style.height = "1rem";
+                  }
+
                   setTimeout(() => {
                     const container =
                       document.querySelector(".ant-modal-content");
@@ -531,6 +608,9 @@
                 })
                 .finally(() => {
                   messageInProgress.value = false;
+                  nextTick(() => {
+                    textareaRef.value?.focus();
+                  });
                 });
             }, 1000);
           };
@@ -546,6 +626,27 @@
             }
           };
 
+          const autoResize = (e) => {
+            const textarea = e.target;
+            if (textarea.value.trim() === "") {
+              textarea.style.height = "1rem";
+            } else {
+              textarea.style.height = textarea.scrollHeight + "px";
+            }
+          };
+
+          const generateAvatarUrl = (label) => {
+            const baseUrl = "https://ui-avatars.com/api/";
+            const params = new URLSearchParams({
+              name: label,
+              background: "#02bd00", //random
+              length: 1,
+              size: 128,
+              rounded: true,
+            });
+            return `${baseUrl}?${params.toString()}`;
+          };
+
           return {
             show,
             channels,
@@ -557,6 +658,9 @@
             userFormDisabled,
             newMessage,
             messages,
+            textareaRef,
+            messageInProgress,
+            messageBoxDisabled,
             showChannel,
             hideChannel,
             likeComment,
@@ -565,7 +669,9 @@
             sendNewMessage,
             isCurrentUser,
             handleKeydown,
+            autoResize,
             dayjs,
+            generateAvatarUrl,
           };
         },
       });

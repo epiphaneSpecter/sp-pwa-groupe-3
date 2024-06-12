@@ -252,10 +252,10 @@ main {
 
 .ant-comment:last-child textarea {
   resize: none;
-  padding: 0;
   border: unset;
   height: 1rem;
   font-size: 1rem;
+  max-height: 12rem;
 }
 
 .ant-comment:last-child textarea:focus {
@@ -348,6 +348,7 @@ minidenticon-svg {
 }
 
 minidenticon-svg svg {
+  border: solid 1px #d9d4d4;
   border-radius: 50%;
   background-color: rgb(255, 255, 255);
   height: 48px;
