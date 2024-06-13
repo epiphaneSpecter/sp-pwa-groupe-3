@@ -313,11 +313,6 @@ button.ant-btn {
   background: #40ca3f;
 }
 
-button.ant-btn[disabled] {
-  background: #d9d9d9;
-  border: none;
-}
-
 /* Form */
 .ant-form-item {
   margin-bottom: 15px;
