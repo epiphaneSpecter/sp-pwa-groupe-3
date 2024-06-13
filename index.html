@@ -12,13 +12,14 @@
       content="Study est une PWA conçue pour faciliter la communication et le partage d'informations entre les étudiants en formation à distance."
     />
     <meta name="theme-color" content="#001529" />
+    <link rel="icon" type="image/x-icon" href="/icons/favicon.ico" />
     <title>Study</title>
 
     <!-- Import Ant Design Vue Reset CSS -->
-    <!-- <link
+    <link
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/ant-design-vue@4.2.1/dist/reset.min.css"
-    /> -->
+    />
     <!-- Import Font Awesome -->
     <link
       rel="stylesheet"
@@ -53,7 +54,8 @@
               name="pseudo"
               :rules="[{ required: true, message: 'Le pseudo est requis!' }]"
             >
-              <a-input v-model:value="userForm.pseudo"> </a-input>
+              <a-input v-model:value="userForm.pseudo" v-immediate-input>
+              </a-input>
             </a-form-item>
 
             <a-form-item>
@@ -167,6 +169,7 @@
                   placeholder="Votre message..."
                   :disabled="messageInProgress"
                   ref="textareaRef"
+                  v-immediate-input
                 />
               </a-form-item>
               <a-form-item>
